@@ -106,10 +106,11 @@ ubuntu              latest              37b164bb431e        3 weeks ago         
 </pre>
 如果只需要其中某项属性信息，加-f参数来指定，若获取Architecture属性：
 <pre>
-[root@192 ~]# docker inspect -f {{.Architecture}} 37b164bb431e
+[root@192 ~]# docker inspect -f {{.Architecture}} 37b164bb431e	
 amd64
 </pre>
 ## 搜索镜像 ##
 用法为docker search TEAM，如搜索带mysql关键字的镜像:`docker search mysql`
 ## 删除镜像 ##
-用法为docker rmi IMAGE[IMAGE...], 其中IMAGE可以用镜像ID和标签，如同一镜像下有多个标签，只是标签指定标签，并不会在删除镜像，如果一个镜像只有一个标签，删除该标签时，在物理上就删除了该镜像，即会删除该镜像的所有AUFS层。
+用法为docker rmi IMAGE[IMAGE...], 其中IMAGE可以用镜像ID和标签，如同一镜像下有多个标签，只是标签指定标签，并不会在删除镜像，如果一个镜像只有一个标签，删除该标签时，在物理上就删除了该镜像，即会删除该镜像的所有AUFS层， 当该镜像创建的容器存在时，是无法删除镜像的。  
+使用docker ps -a 查看本机存在的所有容器：
