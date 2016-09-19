@@ -100,7 +100,7 @@ ubuntu              latest              37b164bb431e        3 weeks ago         
     "Architecture": "amd64",
     "Os": "linux",
     "Size": 0,
-    "VirtualSize": 126608949
+    "VirtualSize": 126608949 
 }
 ]
 </pre>
