@@ -112,5 +112,78 @@ amd64
 ## 搜索镜像 ##
 用法为docker search TEAM，如搜索带mysql关键字的镜像:`docker search mysql`
 ## 删除镜像 ##
-用法为docker rmi IMAGE[IMAGE...], 其中IMAGE可以用镜像ID和标签，如同一镜像下有多个标签，只是标签指定标签，并不会在删除镜像，如果一个镜像只有一个标签，删除该标签时，在物理上就删除了该镜像，即会删除该镜像的所有AUFS层， 当该镜像创建的容器存在时，是无法删除镜像的。  
+用法为docker rmi IMAGE[IMAGE...], 其中IMAGE可以用镜像ID和标签，如同一镜像下有多个标签，只是标签指定标签，并不会在删除镜像，如果一个镜像只有一个标签，删除该标签时，在物理上就删除了该镜像，即会删除该镜像的所有AUFS层， 当该镜像创建的容器存在时，是无法删除镜像的。正确做法是先删除该镜像的所有容器，再来删除镜像。  
 使用docker ps -a 查看本机存在的所有容器：
+<pre>
+[root@192 ~]# docker ps -a
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+4eb742b9b61f        ubuntu:latest       "/bin/bash"         17 minutes ago      Up 17 minutes                           admiring_pasteur   
+</pre>
+<code>
+docker rm 4eb7   删除容器  
+docker rmi 37b164bb431e   删除image
+</code>
+## 创建镜像 ##
+创建镜像的三种方式：  
+1. **基于已有镜像创建**  
+主要使用docker commit命令， 命令格式为docker commit [OPTIONS] CONTAINER [REPOSTITORY[:TAG]], 主要选项包括：  
+-a, --author="" 作者信息  
+-m, --message="" 提交信息  
+-p, --pause=true 提交时暂停容器运行  
+步骤为：  
+1). 创建新镜像，首先启动一下镜像，并在容器中进行修改
+<pre>
+[root@192 ~]# docker run -d -it ubuntu /bin/bash
+3c6f5d0c90c79e43428166a82407bc09da0b692a0c11e40e829fdfdd3a4f6a33
+[root@192 ~]# docker exec -it 3c /bin/bash
+root@3c6f5d0c90c7:/# touch test.txt
+root@3c6f5d0c90c7:/# exit 
+</pre>
+2). 使用docker commit来提交一个新的镜像,命令格式为：  
+`docker commit [OPTIONS] containerId new_resp_name` 例如：  
+`docker commit -m "add a new file test.txt" -a "wdl" 3c6f5d0c9 commit_test`  
+执行docker images可以看到新提交的镜像已经存在于本地
+<pre>
+[root@192 ~]# docker images
+REPOSITORY          TAG                 IMAGE ID            CREATED             VIRTUAL SIZE
+commit_test         latest              657f5f8f5ab6        15 seconds ago      126.6 MB
+ubuntu              latest              37b164bb431e        3 weeks ago         126.6 MB
+</pre> 
+2. **基于本地模板创建**  
+推荐使用OpenVz的模板来导入，下载好模板好，执行命令：
+`cat ubuntu-14.04-x86_64-minimal.tar.gz | docker import - ubuntu:14.04`
+3. **基于Dockfile创建**  
+使用docker commit创建镜像虽然简单，但是不方便团队合作，我们可以用docker build来创建一个镜像。
+1). 新建目录和Dockerfile  
+<pre>
+[root@192 ~]# mkdir wdl
+[root@192 ~]# cd wdl/
+[root@192 wdl]# touch Dockerfile
+</pre>
+2). 编辑Dockerfile
+<pre>
+#This is a comment
+FROM ubuntu:latest
+MAINTAINER Docker wdl <wdl5i@163.com>
+RUN apt-get -qq update 
+RUN apt-get -qqy install ruby ruby-dev
+RUN gem install wdl_docker
+</pre>
+使用#来注释  
+FROM用于告诉Docker使用哪个镜像作为基础  
+接着是维护者的信息  
+RUN开头的指令会在创建中运行，比如安装一个包， 在这里使用apt-get安装一些软件
+3). 使用docker build来生成镜像  
+`docker build -t="用户TAG信息" Dockerfile路径` 如：  
+`docker build -t="wdl/dockertest:v1" .`  
+其中，-t用来标识tag, 指定新的镜像用户信息， .是指Dockerfile所在路径
+## 上传镜像 ##
+用户通过docker push命令，可以将自已创建的镜像上传到仓库中来共享， 例如，用户在docker hub上完成注册后，可以推送自已的镜像到仓库中。 命令格式为`docker push NAME[:TAG]`
+ `docker push wdl/dockertest:v1`
+## 存出和载入镜像 ##
+存出镜像：  
+如果要存出镜像到本地文件，使用docker save命令，如存出本地的ubuntu14.04到ubuntu_14.04.tar:  
+ `docker save -o ubuntu_14.04.tar ubuntu:14.04`  
+载入镜像： 
+可以使用docker load从存出的本地文件中再导入到本地镜像库，如:  
+ `docker load < ubuntu_14.04.tar` 
