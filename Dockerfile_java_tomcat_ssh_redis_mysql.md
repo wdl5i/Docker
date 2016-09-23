@@ -65,7 +65,7 @@ Are you sure you want to continue connecting (yes/no)? yes
 Warning: Permanently added '[127.0.0.1]:10022' (RSA) to the list of known hosts.
 </pre>
 ssh已经成功连接  
-# 使用Dockerfile创建java镜像 #
+# 使用Dockerfile创建java/tomcat/redis镜像 #
 ## 编写Dockerfile ##
 <pre>
 FROM centos:sshd
