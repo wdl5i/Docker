@@ -68,58 +68,40 @@ ssh已经成功连接
 # 使用Dockerfile创建java镜像 #
 ## 编写Dockerfile ##
 <pre>
-#使用ubuntu_sshd镜像
-FROM sshd:dockerfile
-
-#刷新包缓存 并且 安装wget,tar工具  
-RUN apt-get update && apt-get install -y wget  && apt-get install -y tar
-
+FROM centos:sshd
+MAINTAINER wangdonglin wdl5i@163.com
 WORKDIR /usr/local
 
-RUN wget --no-cookies --no-check-certificate --header "Cookie:gpw_e24=http%3a%2f%2fwww.oracle.com%2ftechnetwork%2fjava%2fjavase%2fdownloads%2fjdk7-downloads-1880260.html;oraclelicense=accept-securebackup-cookie" http://download.oracle.com/otn-pub/java/jdk/7u79-b15/jdk-7u79-linux-x64.tar.gz  
-RUN tar -zxf jdk-7u79-linux-x64.tar.gz 
+#setup java
+ADD ./jdk-7u79-linux-x64.tar.gz .
+#RUN tar -zxf jdk-7u79-linux-x64.tar.gz
+ENV JAVA_HOME /usr/local/jdk1.7.0_79
+ENV JRE_HOME $JAVA_HOME/jre
+ENV CLASSPATH .:$JAVA_HOME/lib:$JRE_HOME/lib
+ENV PATH $PATH:$JAVA_HOME/bin
 
-ENV JAVA_HOME /usr/local/jdk1.7.0_79  
-ENV JRE_HOME $JAVA_HOME/jre  
-ENV CLASSPATH .:$JAVA_HOME/lib:$JRE_HOME/lib  
-ENV PATH $PATH:$JAVA_HOME/bin 
-##################################以下软件基于ubuntu:java安装##################################
-#安装 tomcat7  
-FROM ubuntu:java
-MAINTAINER wangdonglin wdl5i@163.com
-WORKDIR /usr/local  
-RUN wget http://mirror.bit.edu.cn/apache/tomcat/tomcat-7/v7.0.72/bin/apache-tomcat-7.0.72.tar.gz
-RUN tar xvf apache-tomcat-7.0.62.tar.gz
- 
-ENV CATALINA_HOME /usr/local/apache-tomcat-7.0.62
+#setup tomcat
+ADD apache-tomcat-7.0.68.tar.gz .
+#RUN tar xvf apache-tomcat-7.0.68.tar.gz
+ENV CATALINA_HOME /usr/local/apache-tomcat-7.0.68
+EXPOSE 8080
+#CMD [ "/usr/local/apache-tomcat-7.0.68/bin/catalina.sh", "run" ]
+RUN echo "/usr/local/apache-tomcat-7.0.68/bin/startup.sh" >> /init.sh
 
-EXPOSE 8080  
-  
-CMD [ "/usr/local/apache-tomcat-7.0.62/bin/catalina.sh", "run" ]  
-
-#安装mysql
-RUN apt-get install -y mysql-server mysql
-RUN /etc/init.d/mysqld start &&\  
-    mysql -e "grant all privileges on *.* to 'root'@'%' identified by '48STX2X';"&&\  
-    mysql -e "grant all privileges on *.* to 'root'@'localhost' identified by '48STX2X';"&&\  
-    mysql -u root -48STX2X -e "show databases;"  
-   
-EXPOSE 3306  
-   
-CMD ["/usr/bin/mysqld_safe"]
-
-#安装Redis  
-RUN wget http://download.redis.io/releases/redis-3.0.3.tar.gz
-RUN tar –zxf redis-3.0.3.tar.gz –C /usr/local/   --strip-components=1
- 
-RUN apt-get install –y gcc libc6-dev make 
-RUN make –C /usr/local/redis-3.0.3
-RUN make –C /usr/local/redis-3.0.3 install
-RUN rm redis-3.0.3.tar.gz
-RUN rm –r /usr/local/redis-3.0.3
- 
+#setup redis
+ADD redis-3.0.3.bin.centos.tar.gz .
+#RUN tar xvf redis-3.0.3.bin.centos.tar.gz
+RUN cp /usr/local/redis-3.0.3/redis.conf /etc/redis.conf
 EXPOSE 6379
-
+RUN mkdir /var/log/redis
+RUN echo "/usr/local/redis-3.0.3/bin/redis-server /etc/redis.conf" >> /init.sh
+RUN echo "while true; do bash;  done" >> /init.sh
+RUN chmod +x /init.sh
+#CMD ["sh", "/init.sh"]
+ENTRYPOINT  ["/bin/sh", "-c", "/init.sh"]
 </pre>
 
-**是使最后sh文件执行，必须是以docker run -d的形式启动，也有可能是CMD和ENTRYPOINT的关系**
+启动容器：  
+ `docker run -it -p 6379:6379 -p 80:8080 centos:nmp  /bin/bash`
+
+**最好用ENTRYPOINT，不用CMD**
