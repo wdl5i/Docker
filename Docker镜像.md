@@ -186,4 +186,11 @@ RUN开头的指令会在创建中运行，比如安装一个包， 在这里使�
  `docker save -o ubuntu_14.04.tar ubuntu:14.04`  
 载入镜像： 
 可以使用docker load从存出的本地文件中再导入到本地镜像库，如:  
- `docker load < ubuntu_14.04.tar` 
+ `docker load < ubuntu_14.04.tar`  
+
+**删除所有tag为none的镜像：**  
+<pre>
+docker ps -a | grep "Exited" | awk '{print $1 }'|xargs docker stop
+docker ps -a | grep "Exited" | awk '{print $1 }'|xargs docker rm
+docker images|grep none|awk '{print $3 }'|xargs docker rmi
+</pre>

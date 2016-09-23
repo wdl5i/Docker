@@ -58,10 +58,12 @@ CMD和ENTRYPOINT比较：两个命令都是只能使用一次，并且都是在�
  `docker run -it -v /home/fengzheng/ftp/:/data  859666d51c6d /bin/bash`  
 11). USER:格式为 USER daemon。指定运行容器时的用户名或 UID，后续的 RUN 也会使用指定用户。
 当服务不需要管理员权限时，可以通过该命令指定运行用户  
-12). WORKDIR:格式为 WORKDIR /path/to/workdir。为后续的 RUN、CMD、ENTRYPOINT 指令配置工作目录。可以使用多个WORKDIR指令，后续命令如果参数是相对路径，则会基于之前命令指定的路径。例如:    
+12). WORKDIR:格式为 WORKDIR /path/to/workdir。为后续的 RUN、CMD、ENTRYPOINT 指令配置工作目录。可以使用多个WORKDIR指令，后续命令如果参数是相对路径，则会基于之前命令指定的路径。例如:
+<pre>    
 WORKDIR /a
 WORKDIR b
 WORKDIR c
+</pre>
 RUN pwd
 则最终路径为/a/b/c  
 13). ONBUILD:格式为 ONBUILD [INSTRUCTION]。
@@ -84,6 +86,64 @@ RUN /usr/local/bin/python-build --dir /app/src
 要指定生成的镜像和标签信息，可以通过-t选项：  
  `docker build -t build_repo/first_image /tmp/docker_builder`
 指定Dockerfile所在路径为/tmp/docker_builder, 并且希望生成的镜像标签为build_repo/first_image
+## 使用Dockerfile创建ssh镜像 ##
+### 编写Dockerfile ###
+<pre>
+#设置基础镜像
+FROM ubuntu:vim
+
+#设备创建和维护人信息
+MAINTAINER wangdonglin wdl5i@163.com
+
+#更新ubuntu的源为国内163的源
+RUN echo "deb http://mirrors.163.com/ubuntu/ trusty main restricted universe multiverse" > /etc/apt/sources.list
+RUN echo "deb http://mirrors.163.com/ubuntu/ trusty-security main restricted universe multiverse" >> /etc/apt/sources.list
+RUN echo "deb http://mirrors.163.com/ubuntu/ trusty-updates main restricted universe multiverse" >> /etc/apt/sources.list
+RUN echo "deb http://mirrors.163.com/ubuntu/ trusty-proposed main restricted universe multiverse" >> /etc/apt/sources.list
+RUN echo "deb http://mirrors.163.com/ubuntu/ trusty-backports main restricted universe multiverse" >> /etc/apt/sources.list
+RUN apt-get update
+RUN apt-get upgrade -y
+
+#安装sshd
+RUN apt-get install -y openssh-server
+RUN mkdir -p /var/run/sshd
+RUN mkdir -p /root/.ssh
+
+#取消pam限制
+RUN sed -ri 's/session    required     pam_loginuid.so/#session    required     pam_loginuid.so/g' /etc/pam.d/sshd
+
+#复制配置文件到相应位置,并赋予脚本可执行权限
+ADD authorized_keys /root/.ssh/authorized_keys
+ADD run.sh /run.sh
+RUN chmod 755 /run.sh
+
+#开放端口
+EXPOSE 22
+
+#设置自启动命令
+CMD ["/run.sh"]
+</pre>
+### 创建镜像 ###
+在sshd_ubuntu目录下，创建sshd镜像，镜像名为sshd:dockerfile
+<pre>
+cd sshd_ubuntu
+docker build -t sshd:dockerfile .
+</pre>
+命令执行完成，当看到有Successful build XXX字样，代表镜像创建成功
+### 测试镜像 ###
+<pre>
+docker run -d -p 10022:22 sshd:dockerfile
+[root@192 ~]# docker ps
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS                   NAMES
+045a1a8f5308        sshd:dockerfile     "/run.sh"           12 minutes ago      Up 12 minutes       0.0.0.0:10022->22/tcp   determined_meitner 
+ssh 127.0.0.1 -p 10022
+The authenticity of host '[127.0.0.1]:10022 ([127.0.0.1]:10022)' can't be established.
+RSA key fingerprint is dc:b4:19:eb:73:73:45:5b:10:6f:30:fa:3f:ae:d6:1a.
+Are you sure you want to continue connecting (yes/no)? yes
+Warning: Permanently added '[127.0.0.1]:10022' (RSA) to the list of known hosts.
+</pre>
+ssh已经成功连接  
+
 
 
 
