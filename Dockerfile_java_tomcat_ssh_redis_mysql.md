@@ -99,9 +99,54 @@ RUN echo "while true; do bash;  done" >> /init.sh
 RUN chmod +x /init.sh
 #CMD ["sh", "/init.sh"]
 ENTRYPOINT  ["/bin/sh", "-c", "/init.sh"]
+
+#setup mysql
+ADD mysql-5.6.19-linux-glibc2.5-x86_64.tar.gz .
+ADD 01.init.sql ./01.init.sql
+RUN mv mysql-5.6.19-linux-glibc2.5-x86_64 mysql
+
+# 添加测试用户mysql，密码mysql，并且将此用户添加到sudoers里
+RUN useradd mysql
+RUN echo "mysql:mysql" | chpasswd
+RUN echo "mysql   ALL=(ALL)       ALL" >> /etc/sudoers
+
+# 设置Mysql安装目录的权限
+RUN cd mysql && chown -R mysql:mysql ./
+
+# 复制已经准备好的my.cnf文件到Docker容器
+COPY my.cnf /etc/my.cnf
+RUN chown mysql:mysql /etc/my.cnf
+
+#setup depend
+RUN yum -y install perl perl-devel autoconf libaio
+# 初始化数据库
+RUN cd mysql && ./scripts/mysql_install_db --user=mysql --basedir=/usr/local/mysql --datadir=/usr/local/mysql/data/
+# 设置MySQL的环境变量，若读者有其他的环境变量需要设置，也可以在这里添加。
+ENV MYSQL_HOME /usr/local/mysql
+
+# （不推荐下面的路径直接建立在Docker虚拟机上，推荐使用volume挂载方式）
+# 在宿主机上创建一个数据库目录存储Mysql的数据文件
+# mkdir -p mysql/data
+
+# VOLUME 选项是将本地的目录挂在到容器中　此处要注意：当你运行-v　＜hostdir>:<Containerdir> 时要确保目录内容相同否则会出现数据丢失
+# 对应关系如下
+# mysql:mysql/data
+VOLUME ["/usr/local/mysql/data"]
+RUN cp /usr/local/mysql/support-files/mysql.server /etc/init.d/mysqld
+RUN echo "/etc/init.d/mysqld start" >> /init.sh
+RUN echo "/usr/local/mysql/bin/mysql --socket=/usr/local/mysql/data/mysql.sock -e \"grant all privileges on *.* to 'root'@'%' identified by '48STX2X';\"" >> /init.sh
+RUN echo "/usr/local/mysql/bin/mysql --socket=/usr/local/mysql/data/mysql.sock -e \"grant all privileges on *.* to 'root'@'localhost' identified by '48STX2X';\"" >> /init.sh
+RUN echo "/usr/local/mysql/bin/mysql --socket=/usr/local/mysql/data/mysql.sock -uroot -p48STX2X < /usr/local/01.init.sql" >> /init.sh
+RUN echo "while true; do bash;  done" >> /init.sh
+RUN chmod +x /init.sh
+
+# 容器需要开放MySQL 3306端口
+EXPOSE 3306
+ENTRYPOINT  ["/bin/sh", "-c", "/init.sh"]
 </pre>
 
-启动容器：  
- `docker run -it -p 6379:6379 -p 80:8080 centos:nmp  /bin/bash`
-
 **最好用ENTRYPOINT，不用CMD**
+  
+启动容器  
+ `docker run -d -p 3306:3306 -p 80:8080 -p 6379:6379 centos:nmp bash` 
+
