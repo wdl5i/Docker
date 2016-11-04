@@ -7,7 +7,7 @@
 </pre>
 ## 生成SSH密钥对
 在宿主机上生成ssh密钥对，并创建authorized_keys文件：  
-ssh-keygen -t rsa
+ssh-keygen -t rsa  
 cat ~/.ssh/id_rsa.pub > authorized_keys
 ## 编写Dockerfile ##
 <pre>
@@ -32,7 +32,9 @@ RUN mkdir -p /var/run/sshd
 RUN mkdir -p /root/.ssh
 
 #取消pam限制
-RUN sed -ri 's/session    required     pam_loginuid.so/#session    required     pam_loginuid.so/g' /etc/pam.d/sshd
+RUN sed -ri 's/session    required     
+pam_loginuid.so/#session    required     
+pam_loginuid.so/g' /etc/pam.d/sshd
 
 #复制配置文件到相应位置,并赋予脚本可执行权限
 ADD authorized_keys /root/.ssh/authorized_keys
@@ -149,4 +151,5 @@ ENTRYPOINT  ["/bin/sh", "-c", "/init.sh"]
   
 启动容器  
  `docker run -d -p 3306:3306 -p 80:8080 -p 6379:6379 centos:nmp bash` 
+ `docker run -d --name nmp -p 3306:3306 -p 10022:22 -p 80:8080 -p 6379:6379 -v /opt/share:/usr/local/apache-tomcat-7.0.68/webapps centos:nmp bash`
 

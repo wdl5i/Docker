@@ -1,6 +1,10 @@
 # Docker的核心概念和安装 #
 ## Docker核心概念 ##
 **Docker镜像**  
+Docker 是 PaaS 提供商 dotCloud 开源的一个基于 LXC 的高级容器引擎，源代码托管在 Github 上, 基于go语言并遵从Apache2.0协议开源。  
+任何一个在互联网上提供其服务的公司都可以叫做云计算公司。其实云计算分几层的，分别是Infrastructure（基础设施）-as-a-Service，Platform（平台）-as-a-Service，Software（软件）-as-a-Service。基础设施在最下端，平台在中间，软件在顶端。别的一些“软”的层可以在这些层上面添加。  
+![](http://i.imgur.com/GvdNBjJ.png) 
+
 Docker镜像类似于虚拟机镜像，可以理解为面向Docker引擎的只读模板，包含了文件系统。镜像是创建Docker容器的基础，通过版本管理和增量的文件系统，Docker提供了一套十分简单的机制来创建和更新现有镜像。  
 **Docker容器** 
 类似于轻量级的安全沙箱，通过容器来运行和隔离应用。  

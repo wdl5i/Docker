@@ -178,8 +178,9 @@ RUN开头的指令会在创建中运行，比如安装一个包， 在这里使�
 `docker build -t="wdl/dockertest:v1" .`  
 其中，-t用来标识tag, 指定新的镜像用户信息， .是指Dockerfile所在路径
 ## 上传镜像 ##
-用户通过docker push命令，可以将自已创建的镜像上传到仓库中来共享， 例如，用户在docker hub上完成注册后，可以推送自已的镜像到仓库中。 命令格式为`docker push NAME[:TAG]`
- `docker push wdl/dockertest:v1`
+用户通过docker push命令，可以将自已创建的镜像上传到仓库中来共享， 例如，用户在docker hub上完成注册后，可以推送自已的镜像到仓库中。 命令格式为
+ `docker push NAME[:TAG]`   
+ `docker push wdl/dockertest:v1` 
 ## 存出和载入镜像 ##
 存出镜像：  
 如果要存出镜像到本地文件，使用docker save命令，如存出本地的ubuntu14.04到ubuntu_14.04.tar:  

@@ -27,10 +27,10 @@ CMD /usr/sbin/nginx
 3). RUN:格式为 RUN <command> 或 RUN ["executable", "param1", "param2"]  
 前者将在shell终端中运行命令，即 /bin/sh -c；后者则使用 exec 执行。指定使用其它终端可以通过第二种方式实现，例如 RUN ["/bin/bash", "-c", "echo hello"]。
 每条 RUN 指令将在当前镜像基础上执行指定命令，并提交为新的镜像。当命令较长时可以使用\来换行。  
-4). CMD:支持三种格式
-　　1.CMD ["executable","param1","param2"] 使用 exec 执行，推荐方式；
-　　2.CMD command param1 param2 在 /bin/sh 中执行，提供给需要交互的应用；
-　　3.CMD ["param1","param2"] 提供给 ENTRYPOINT 的默认参数；
+4). CMD:支持三种格式  
+　　1.CMD ["executable","param1","param2"] 使用 exec 执行，推荐方式；  
+　　2.CMD command param1 param2 在 /bin/sh 中执行，提供给需要交互的应用；  
+　　3.CMD ["param1","param2"] 提供给 ENTRYPOINT 的默认参数；  
 指定启动容器时执行的命令，每个Dockerfile只能有一条 CMD 命令。如果指定了多条命令，只有最后一条会被执行。如果用户启动容器时候指定了运行的命令，则会覆盖掉 CMD 指定的命令。  
 5). EXPOSE:格式为 EXPOSE port [port...]。
 告诉Docker服务端容器暴露的端口号，供互联系统使用。在启动容器时需要通过-P，Docker主机会自动分配一个端口转发到指定的端口。  
